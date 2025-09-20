@@ -2,27 +2,49 @@ package reseaux;
 
 public class Test {
     public static void main(String[] args) {
-        DES DES = new DES();
+        DES des = new DES();
 
-        String message = "ABCDEFGH";
-        int[] messageCrypte = DES.crypte(message);
+        // Test de conversion stringToBits et bitsToString
+        String testMessage = "Ta gueule ";
+        System.out.println("Message original: " + testMessage);
 
-        System.out.println("Message clair : " + message);
+        int[] bits = des.stringToBits(testMessage);
+        System.out.println("Bits: " + arrayToString(bits));
 
-        System.out.print("Message crypté (bits) : ");
-        for (int bit : messageCrypte) System.out.print(bit);
-        System.out.println();
+        String convertedBack = des.bitsToString(bits);
+        System.out.println("Converti en retour: " + convertedBack);
 
-        String messageDecrypte = DES.decrypte(messageCrypte);
-        System.out.println("Message décrypté : " + messageDecrypte);
+        // Test de cryptage et décryptage
+        System.out.println("\n=== Test Cryptage/Décryptage ===");
 
-        // Test de la fonction F avec la clé de ronde 1
-        int[] bloc32 = new int[32];
-        for (int i = 0; i < 32; i++) bloc32[i] = i % 2; // petit exemple
+        int[] crypted = des.crypte(testMessage);
+        System.out.println("Message crypté (bits): " + arrayToString(crypted));
 
-        int[] F = DES.fonction_F(DES.tab_cles[0], bloc32);
-        System.out.print("Résultat fonction F (32 bits) : ");
-        for (int b : F) System.out.print(b);
-        System.out.println();
+        String decrypted = des.decrypte(crypted);
+        System.out.println("Message décrypté: " + decrypted);
+
+        // Vérification
+        System.out.println("Test réussi: " + testMessage.equals(decrypted));
+    }
+
+    private static String arrayToString(int[] array) {
+        if (array == null) return "null";
+        if (array.length > 20) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 10; i++) {
+                sb.append(array[i]);
+            }
+            sb.append("...");
+            for (int i = array.length - 10; i < array.length; i++) {
+                sb.append(array[i]);
+            }
+            return sb.toString();
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (int value : array) {
+            sb.append(value);
+        }
+        return sb.toString();
     }
 }
