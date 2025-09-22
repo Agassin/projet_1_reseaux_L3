@@ -7,7 +7,6 @@ public class DES {
     private static final int TAILLE_SOUS_BLOC = 32;
     private static final int NB_RONDE = 1;
 
-    // Tables de permutation (valeurs d'indice commençant à 1)
     private static final int[] PERM_INITIALE = {
             58, 50, 42, 34, 26, 18, 10, 2,
             60, 52, 44, 36, 28, 20, 12, 4,
@@ -74,7 +73,6 @@ public class DES {
             22, 11, 4, 25
     };
 
-    // Table S simplifiée (utilisée pour toutes les boîtes S)
     private static final int[][] S = {
             {14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7},
             {0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8},
@@ -83,7 +81,6 @@ public class DES {
     };
 
     private static final int[] TAB_DECALAGE = {1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1};
-
 
 
     private int[] masterKey;
@@ -97,6 +94,35 @@ public class DES {
         }
     }
 
+    public int[] stringToBits(String message) {
+        if (message == null) return new int[0];
+        byte[] bytes = message.getBytes();
+        int[] bits = new int[bytes.length * 8];
+        int index = 0;
+        for (byte b : bytes) {
+            for (int i = 7; i >= 0; i--) {
+                bits[index++] = (b >> i) & 1;
+            }
+        }
+        return bits;
+    }
+
+    public String bitsToString(int[] blocs) {
+        if (blocs == null || blocs.length == 0) return "";
+        if (blocs.length % 8 != 0) {
+            throw new IllegalArgumentException("La longueur du tableau doit être un multiple de 8");
+        }
+        byte[] bytes = new byte[blocs.length / 8];
+        for (int i = 0; i < bytes.length; i++) {
+            int byteValue = 0;
+            for (int j = 0; j < 8; j++) {
+                byteValue = (byteValue << 1) | blocs[i * 8 + j];
+            }
+            bytes[i] = (byte) byteValue;
+        }
+        return new String(bytes);
+    }
+
     public int[] genereMasterKey() {
         int[] key = new int[64];
         Random random = new Random();
@@ -106,78 +132,20 @@ public class DES {
         return key;
     }
 
-
-    public int[] crypte(String message_clair) {
-        int[] bits = stringToBits(message_clair);
-        return bits;
-    }
-
-    public int[] stringToBits(String message) {
-        if (message == null) return new int[0];
-        int[] bits = new int[message.length() * 16];
-        int index = 0;
-        for (char ch : message.toCharArray()) {
-            int charValue = (int) ch;
-            for (int i = 15; i >= 0; i--) {
-                bits[index++] = (charValue >>> i) & 1;
-            }
-        }
-        return bits;
-    }
-
-
-    public String decrypte(int[] messageCode) {
-
-        return bitsToString(messageCode);
-    }
-
-    public String bitsToString(int[] blocs) {
-        if (blocs == null || blocs.length == 0) return "";
-        if (blocs.length % 16 != 0) {
-            throw new IllegalArgumentException("La longueur du tableau doit être un multiple de 16");
-        }
-        StringBuilder result = new StringBuilder();
-        int nbCaracteres = blocs.length / 16;
-        for (int i = 0; i < nbCaracteres; i++) {
-            int charValue = 0;
-            int startIndex = i * 16;
-            for (int j = 0; j < 16; j++) {
-                charValue = (charValue << 1) | blocs[startIndex + j];
-            }
-            result.append((char) charValue);
-        }
-        return result.toString();
-    }
-
-    public int[] genereCle(int n) {
-        int[] pc1Key = permutation(PC1, masterKey);
-        int[][] cd = decoupage(pc1Key, 28);
-        int[] C = cd[0];
-        int[] D = cd[1];
-        for (int i = 0; i <= n; i++) {
-            C = decalle_gauche(C, TAB_DECALAGE[i]);
-            D = decalle_gauche(D, TAB_DECALAGE[i]);
-        }
-        int[] CD = recollage_bloc(new int[][]{C, D});
-        int[] cle = permutation(PC2, CD);
-        tab_cles[n] = cle;
-        return cle;
-    }
-
     public int[] permutation(int[] tab_permutation, int[] bloc) {
-        int[] tab_rep = new int[tab_permutation.length];
+        int[] resultat = new int[tab_permutation.length];
         for (int i = 0; i < tab_permutation.length; i++) {
-            tab_rep[i] = bloc[tab_permutation[i] - 1];
+            resultat[i] = bloc[tab_permutation[i] - 1];
         }
-        return tab_rep;
+        return resultat;
     }
 
     public int[] invPermutation(int[] tab_permutation, int[] bloc) {
-        int[] tab_rep = new int[tab_permutation.length];
+        int[] resultat = new int[tab_permutation.length];
         for (int i = 0; i < tab_permutation.length; i++) {
-            tab_rep[tab_permutation[i] - 1] = bloc[i];
+            resultat[tab_permutation[i] - 1] = bloc[i];
         }
-        return tab_rep;
+        return resultat;
     }
 
     public int[][] decoupage(int[] bloc, int tailleBlocs) {
@@ -186,6 +154,7 @@ public class DES {
         }
         int nbBlocs = bloc.length / tailleBlocs;
         int[][] blocs = new int[nbBlocs][tailleBlocs];
+
         for (int i = 0; i < nbBlocs; i++) {
             System.arraycopy(bloc, i * tailleBlocs, blocs[i], 0, tailleBlocs);
         }
@@ -224,6 +193,19 @@ public class DES {
         return result;
     }
 
+    public void genereCle(int n) {
+        int[] pc1Key = permutation(PC1, masterKey);
+        int[][] cd = decoupage(pc1Key, 28);
+        int[] C = cd[0];
+        int[] D = cd[1];
+        for (int i = 0; i <= n; i++) {
+            C = decalle_gauche(C, TAB_DECALAGE[i]);
+            D = decalle_gauche(D, TAB_DECALAGE[i]);
+        }
+        int[] CD = recollage_bloc(new int[][]{C, D});
+        tab_cles[n] = permutation(PC2, CD);
+    }
+
     public int[] fonction_S(int[] tab) {
         if (tab.length != 48) {
             throw new IllegalArgumentException("L'entrée de la fonction S doit être de 48 bits");
@@ -233,21 +215,29 @@ public class DES {
         for (int i = 0; i < 8; i++) {
             int start = i * 6;
             int row = (tab[start] << 1) | tab[start + 5];
-            int col = (tab[start + 1] << 3) | (tab[start + 2] << 2) | (tab[start + 3] << 1) | tab[start + 4];
+            int col = (tab[start + 1] << 3) | (tab[start + 2] << 2) |
+                    (tab[start + 3] << 1) | tab[start + 4];
             int sValue = S[row][col];
             for (int j = 3; j >= 0; j--) {
-                result[resultIndex + j] = sValue & 1;
-                sValue >>= 1;
+                result[resultIndex++] = (sValue >> j) & 1;
             }
-            resultIndex += 4;
         }
         return result;
     }
 
-    public int[] fonction_F(int[] uneCle, int[] unD) {
+    public int[] fonction_F(int[] unD) {
         int[] expanded = permutation(E, unD);
-        int[] xorResult = xor(expanded, uneCle);
+        int[] xorResult = xor(expanded, tab_cles[0]);
         int[] sResult = fonction_S(xorResult);
         return permutation(P, sResult);
+    }
+
+    public int[] crypte(String message_clair) {
+        int[] bits = stringToBits(message_clair);
+        return bits;
+    }
+
+    public String decrypte(int[] messageCode) {
+        return bitsToString(messageCode);
     }
 }
