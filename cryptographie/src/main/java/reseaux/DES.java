@@ -262,10 +262,31 @@ public class DES {
 
     public int[] crypte(String message_clair) {
         int[] bits = stringToBits(message_clair);
-        return bits;
+        int[][] blocs64 = decoupage(bits, TAILLE_BLOC);
+        int[][] blocsCryptes = new int[blocs64.length][TAILLE_BLOC];
+        for (int i = 0; i < blocs64.length; i++) {
+            int[] blocPermute = permutation(PERM_INITIALE, blocs64[i]);
+            int[][] gd = decoupage(blocPermute, TAILLE_SOUS_BLOC);
+            int[] G = gd[0];
+            int[] D = gd[1];
+            for (int ronde = 0; ronde < NB_RONDE; ronde++) {
+                if (ronde >= tab_cles.length) {
+                    genereCle(ronde);
+                }
+                int[] G_prev = G.clone();
+                int[] D_prev = D.clone();
+                int[] f_result = fonction_F(D_prev);
+                D = xor(G_prev, f_result);
+                G = D_prev;
+            }
+            int[] blocRecolle = recollage_bloc(new int[][]{G, D});
+            blocsCryptes[i] = invPermutation(PERM_INVERSE, blocRecolle);
+        }
+        return recollage_bloc(blocsCryptes);
     }
 
     public String decrypte(int[] messageCode) {
+
         return bitsToString(messageCode);
     }
 }
