@@ -5,7 +5,7 @@ import java.util.Random;
 public class DES {
     private static final int TAILLE_BLOC = 64;
     private static final int TAILLE_SOUS_BLOC = 32;
-    private static final int NB_RONDE = 1;
+    private static final int NB_RONDE = 16;
 
     private static final int[] PERM_INITIALE = {
             58, 50, 42, 34, 26, 18, 10, 2,
@@ -165,9 +165,9 @@ public class DES {
     }
 
     public int[][] decoupage(int[] bloc, int tailleBlocs) {
-        if (bloc.length % tailleBlocs != 0) {
+        /*if (bloc.length % tailleBlocs != 0) {
             throw new IllegalArgumentException("La taille du bloc doit être un multiple de " + tailleBlocs);
-        }
+        }*/
         int nbBlocs = bloc.length / tailleBlocs;
         int[][] blocs = new int[nbBlocs][tailleBlocs];
 
