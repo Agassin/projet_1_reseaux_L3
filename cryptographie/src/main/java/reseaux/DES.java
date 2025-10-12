@@ -68,29 +68,88 @@ public class DES {
             1, 15, 23, 26,
             5, 18, 31, 10,
             2, 8, 24, 14,
-            32, 3, 27, 9,
+            32, 27, 3, 9,
             19, 13, 30, 6,
             22, 11, 4, 25
     };
 
-    private static final int[][] S = {
-            {14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7},
-            {0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8},
-            {4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0},
-            {15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13}
+    // Tables S-Box complètes (8 boîtes de substitution)
+    private static final int[][][] S = {
+            {
+                    {14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7},
+                    {0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8},
+                    {4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0},
+                    {15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13}
+            },
+            {
+                    {15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10},
+                    {3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5},
+                    {0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15},
+                    {13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9}
+            },
+            {
+                    {10, 0, 9, 14, 6, 3, 15, 5, 1, 13, 12, 7, 11, 4, 2, 8},
+                    {13, 7, 0, 9, 3, 4, 6, 10, 2, 8, 5, 14, 12, 11, 15, 1},
+                    {13, 6, 4, 9, 8, 15, 3, 0, 11, 1, 2, 12, 5, 10, 14, 7},
+                    {1, 10, 13, 0, 6, 9, 8, 7, 4, 15, 14, 3, 11, 5, 2, 12}
+            },
+            {
+                    {7, 13, 14, 3, 0, 6, 9, 10, 1, 2, 8, 5, 11, 12, 4, 15},
+                    {13, 8, 11, 5, 6, 15, 0, 3, 4, 7, 2, 12, 1, 10, 14, 9},
+                    {10, 6, 9, 0, 12, 11, 7, 13, 15, 1, 3, 14, 5, 2, 8, 4},
+                    {3, 15, 0, 6, 10, 1, 13, 8, 9, 4, 5, 11, 12, 7, 2, 14}
+            },
+            {
+                    {2, 12, 4, 1, 7, 10, 11, 6, 8, 5, 3, 15, 13, 0, 14, 9},
+                    {14, 11, 2, 12, 4, 7, 13, 1, 5, 0, 15, 10, 3, 9, 8, 6},
+                    {4, 2, 1, 11, 10, 13, 7, 8, 15, 9, 12, 5, 6, 3, 0, 14},
+                    {11, 8, 12, 7, 1, 14, 2, 13, 6, 15, 0, 9, 10, 4, 5, 3}
+            },
+            {
+                    {12, 1, 10, 15, 9, 2, 6, 8, 0, 13, 3, 4, 14, 7, 5, 11},
+                    {10, 15, 4, 2, 7, 12, 9, 5, 6, 1, 13, 14, 0, 11, 3, 8},
+                    {9, 14, 15, 5, 2, 8, 12, 3, 7, 0, 4, 10, 1, 13, 11, 6},
+                    {4, 3, 2, 12, 9, 5, 15, 10, 11, 14, 1, 7, 6, 0, 8, 13}
+            },
+            {
+                    {4, 11, 2, 14, 15, 0, 8, 13, 3, 12, 9, 7, 5, 10, 6, 1},
+                    {13, 0, 11, 7, 4, 9, 1, 10, 14, 3, 5, 12, 2, 15, 8, 6},
+                    {1, 4, 11, 13, 12, 3, 7, 14, 10, 15, 6, 8, 0, 5, 9, 2},
+                    {6, 11, 13, 8, 1, 4, 10, 7, 9, 5, 0, 15, 14, 2, 3, 12}
+            },
+            {
+                    {13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7},
+                    {1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2},
+                    {7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8},
+                    {2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11}
+            }
     };
 
     private static final int[] TAB_DECALAGE = {1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1};
 
-
     private int[] masterKey;
-    int[][] tab_cles;
+    private int[][] tab_cles;
 
     public DES() {
         this.masterKey = genereMasterKey();
         this.tab_cles = new int[NB_RONDE][48];
+        genererToutesCles();
+    }
+
+    private void genererToutesCles() {
+        int[] pc1Key = permutation(PC1, masterKey);
+        int[][] cd = decoupage(pc1Key, 28);
+        int[] C = cd[0];
+        int[] D = cd[1];
+
         for (int i = 0; i < NB_RONDE; i++) {
-            genereCle(i);
+            // Décaler C et D pour cette ronde
+            C = decalle_gauche(C, TAB_DECALAGE[i]);
+            D = decalle_gauche(D, TAB_DECALAGE[i]);
+
+            // Générer la clé pour cette ronde
+            int[] CD = recollage_bloc(new int[][]{C, D});
+            tab_cles[i] = permutation(PC2, CD);
         }
     }
 
@@ -111,7 +170,6 @@ public class DES {
                 index++;
             }
         }
-
         return bits;
     }
 
@@ -157,7 +215,7 @@ public class DES {
     }
 
     public int[] invPermutation(int[] tab_permutation, int[] bloc) {
-        int[] resultat = new int[tab_permutation.length];
+        int[] resultat = new int[bloc.length];
         for (int i = 0; i < tab_permutation.length; i++) {
             resultat[tab_permutation[i] - 1] = bloc[i];
         }
@@ -165,12 +223,8 @@ public class DES {
     }
 
     public int[][] decoupage(int[] bloc, int tailleBlocs) {
-        /*if (bloc.length % tailleBlocs != 0) {
-            throw new IllegalArgumentException("La taille du bloc doit être un multiple de " + tailleBlocs);
-        }*/
         int nbBlocs = bloc.length / tailleBlocs;
         int[][] blocs = new int[nbBlocs][tailleBlocs];
-
         for (int i = 0; i < nbBlocs; i++) {
             System.arraycopy(bloc, i * tailleBlocs, blocs[i], 0, tailleBlocs);
         }
@@ -204,29 +258,12 @@ public class DES {
         }
         int[] res = new int[tab1.length];
         for (int i = 0; i < tab1.length; i++) {
-            int bit1 = tab1[i];
-            int bit2 = tab2[i];
-            if (bit1 == bit2) {
-                res[i] = 0;
-            } else {
-                res[i] = 1;
-            }
+            res[i] = (tab1[i] == tab2[i]) ? 0 : 1;
         }
         return res;
     }
 
-    public void genereCle(int n) {
-        int[] pc1Key = permutation(PC1, masterKey);
-        int[][] cd = decoupage(pc1Key, 28);
-        int[] C = cd[0];
-        int[] D = cd[1];
-        for (int i = 0; i <= n; i++) {
-            C = decalle_gauche(C, TAB_DECALAGE[i]);
-            D = decalle_gauche(D, TAB_DECALAGE[i]);
-        }
-        int[] CD = recollage_bloc(new int[][]{C, D});
-        tab_cles[n] = permutation(PC2, CD);
-    }
+
 
     public int[] fonction_S(int[] tab) {
         if (tab.length != 48) {
@@ -243,7 +280,7 @@ public class DES {
             String bitsCol = "" + tab[debut + 1] + tab[debut + 2] +
                     tab[debut + 3] + tab[debut + 4];
             int col = Integer.parseInt(bitsCol, 2);
-            int val = S[l][col];
+            int val = S[i][l][col];
             String binaire = String.format("%4s", Integer.toBinaryString(val)).replace(' ', '0');
             for (int j = 0; j < 4; j++) {
                 res[indexRes] = Character.getNumericValue(binaire.charAt(j));
@@ -253,57 +290,103 @@ public class DES {
         return res;
     }
 
-    public int[] fonction_F(int[] unD) {
+    // CORRECTION: Ajout du paramètre ronde
+    public int[] fonction_F(int[] unD, int ronde) {
         int[] perm = permutation(E, unD);
-        int[] xorRes = xor(perm, tab_cles[0]);
+        int[] xorRes = xor(perm, tab_cles[ronde]);
         int[] sRes = fonction_S(xorRes);
         return permutation(P, sRes);
     }
 
     public int[] crypte(String message_clair) {
         int[] bits = stringToBits(message_clair);
+        int longueurOriginale = bits.length;
+
+        // Ajout du padding si nécessaire
+        int reste = bits.length % TAILLE_BLOC;
+        if (reste != 0) {
+            int nouveauLength = bits.length + (TAILLE_BLOC - reste);
+            int[] bitsAvecPadding = new int[nouveauLength];
+            System.arraycopy(bits, 0, bitsAvecPadding, 0, bits.length);
+            bits = bitsAvecPadding;
+        }
+
+        // Stocker la longueur originale dans les 32 premiers bits du résultat
+        int[] longueurBits = new int[32];
+        for (int i = 31; i >= 0; i--) {
+            longueurBits[31 - i] = (longueurOriginale >> i) & 1;
+        }
+
         int[][] blocs64 = decoupage(bits, TAILLE_BLOC);
         int[][] blocsCryptes = new int[blocs64.length][TAILLE_BLOC];
+
         for (int i = 0; i < blocs64.length; i++) {
             int[] blocPermute = permutation(PERM_INITIALE, blocs64[i]);
             int[][] gd = decoupage(blocPermute, TAILLE_SOUS_BLOC);
             int[] G = gd[0];
             int[] D = gd[1];
+
             for (int ronde = 0; ronde < NB_RONDE; ronde++) {
-                if (ronde >= tab_cles.length) {
-                    genereCle(ronde);
-                }
-                int[] G_prev = G.clone();
-                int[] D_prev = D.clone();
-                int[] f_result = fonction_F(D_prev);
+                int[] G_prev = G;
+                int[] f_result = fonction_F(D, ronde);
+                G = D;
                 D = xor(G_prev, f_result);
-                G = D_prev;
             }
-            int[] blocRecolle = recollage_bloc(new int[][]{G, D});
-            blocsCryptes[i] = invPermutation(PERM_INVERSE, blocRecolle);
+
+            // Après la dernière ronde, on inverse G et D
+            int[] blocRecolle = recollage_bloc(new int[][]{D, G});
+            blocsCryptes[i] = permutation(PERM_INVERSE, blocRecolle);
         }
-        return recollage_bloc(blocsCryptes);
+
+        int[] resultat = recollage_bloc(blocsCryptes);
+
+        // Ajouter la longueur au début
+        int[] resultatAvecLongueur = new int[32 + resultat.length];
+        System.arraycopy(longueurBits, 0, resultatAvecLongueur, 0, 32);
+        System.arraycopy(resultat, 0, resultatAvecLongueur, 32, resultat.length);
+
+        return resultatAvecLongueur;
     }
 
     public String decrypte(int[] messageCode) {
-        int[][] blocs64 = decoupage(messageCode, TAILLE_BLOC);
+        // Extraire la longueur originale des 32 premiers bits
+        int longueurOriginale = 0;
+        for (int i = 0; i < 32; i++) {
+            longueurOriginale = (longueurOriginale << 1) | messageCode[i];
+        }
+
+        // Extraire le message crypté (sans les 32 premiers bits)
+        int[] messageCrypteSansLongueur = new int[messageCode.length - 32];
+        System.arraycopy(messageCode, 32, messageCrypteSansLongueur, 0, messageCrypteSansLongueur.length);
+
+        int[][] blocs64 = decoupage(messageCrypteSansLongueur, TAILLE_BLOC);
         int[][] blocsDecryptes = new int[blocs64.length][TAILLE_BLOC];
+
         for (int i = 0; i < blocs64.length; i++) {
             int[] blocPermute = permutation(PERM_INITIALE, blocs64[i]);
             int[][] gd = decoupage(blocPermute, TAILLE_SOUS_BLOC);
             int[] G = gd[0];
             int[] D = gd[1];
-            for (int ronde = NB_RONDE - 1; ronde >= 0; ronde--) {
-                int[] G_prev = G.clone();
-                int[] D_prev = D.clone();
-                int[] f_result = fonction_F(G_prev);
-                G = xor(D_prev, f_result);
-                D = G_prev;
+
+            // Pour le déchiffrement : même structure que chiffrement mais clés inversées
+            for (int ronde = 0; ronde < NB_RONDE; ronde++) {
+                int[] G_prev = G;
+                int[] f_result = fonction_F(D, NB_RONDE - 1 - ronde);
+                G = D;
+                D = xor(G_prev, f_result);
             }
-            int[] blocRecolle = recollage_bloc(new int[][]{G, D});
-            blocsDecryptes[i] = invPermutation(PERM_INVERSE, blocRecolle);
+
+            // Après la dernière ronde, on inverse G et D
+            int[] blocRecolle = recollage_bloc(new int[][]{D, G});
+            blocsDecryptes[i] = permutation(PERM_INVERSE, blocRecolle);
         }
 
-        return bitsToString(recollage_bloc(blocsDecryptes));
+        int[] tousLesBits = recollage_bloc(blocsDecryptes);
+
+        // Ne garder que les bits correspondant à la longueur originale
+        int[] bitsOriginaux = new int[longueurOriginale];
+        System.arraycopy(tousLesBits, 0, bitsOriginaux, 0, longueurOriginale);
+
+        return bitsToString(bitsOriginaux);
     }
 }
