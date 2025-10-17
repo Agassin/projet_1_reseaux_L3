@@ -3,6 +3,7 @@ package reseaux;
 import java.util.Random;
 
 public class DES {
+    // ... (toutes les constantes existantes restent identiques) ...
     private static final int TAILLE_BLOC = 64;
     private static final int TAILLE_SOUS_BLOC = 32;
     private static final int NB_RONDE = 16;
@@ -130,12 +131,25 @@ public class DES {
     private int[] masterKey;
     private int[][] tab_cles;
 
+    // === CONSTRUCTEURS ===
     public DES() {
         this.masterKey = genereMasterKey();
         this.tab_cles = new int[NB_RONDE][48];
         genererToutesCles();
     }
 
+    // Constructeur avec clé spécifique (pour Triple DES)
+    public DES(int[] masterKey) {
+        if (masterKey != null && masterKey.length == 64) {
+            this.masterKey = masterKey.clone();
+        } else {
+            this.masterKey = genereMasterKey();
+        }
+        this.tab_cles = new int[NB_RONDE][48];
+        genererToutesCles();
+    }
+
+    // === MÉTHODES EXISTANTES (inchangées) ===
     private void genererToutesCles() {
         int[] pc1Key = permutation(PC1, masterKey);
         int[][] cd = decoupage(pc1Key, 28);
@@ -143,11 +157,9 @@ public class DES {
         int[] D = cd[1];
 
         for (int i = 0; i < NB_RONDE; i++) {
-            // Décaler C et D pour cette ronde
             C = decalle_gauche(C, TAB_DECALAGE[i]);
             D = decalle_gauche(D, TAB_DECALAGE[i]);
 
-            // Générer la clé pour cette ronde
             int[] CD = recollage_bloc(new int[][]{C, D});
             tab_cles[i] = permutation(PC2, CD);
         }
@@ -263,8 +275,6 @@ public class DES {
         return res;
     }
 
-
-
     public int[] fonction_S(int[] tab) {
         if (tab.length != 48) {
             throw new IllegalArgumentException("Il faut 48 bits en entrée");
@@ -290,7 +300,6 @@ public class DES {
         return res;
     }
 
-    // CORRECTION: Ajout du paramètre ronde
     public int[] fonction_F(int[] unD, int ronde) {
         int[] perm = permutation(E, unD);
         int[] xorRes = xor(perm, tab_cles[ronde]);
@@ -302,7 +311,6 @@ public class DES {
         int[] bits = stringToBits(message_clair);
         int longueurOriginale = bits.length;
 
-        // Ajout du padding si nécessaire
         int reste = bits.length % TAILLE_BLOC;
         if (reste != 0) {
             int nouveauLength = bits.length + (TAILLE_BLOC - reste);
@@ -311,7 +319,6 @@ public class DES {
             bits = bitsAvecPadding;
         }
 
-        // Stocker la longueur originale dans les 32 premiers bits du résultat
         int[] longueurBits = new int[32];
         for (int i = 31; i >= 0; i--) {
             longueurBits[31 - i] = (longueurOriginale >> i) & 1;
@@ -333,14 +340,12 @@ public class DES {
                 D = xor(G_prev, f_result);
             }
 
-            // Après la dernière ronde, on inverse G et D
             int[] blocRecolle = recollage_bloc(new int[][]{D, G});
             blocsCryptes[i] = permutation(PERM_INVERSE, blocRecolle);
         }
 
         int[] resultat = recollage_bloc(blocsCryptes);
 
-        // Ajouter la longueur au début
         int[] resultatAvecLongueur = new int[32 + resultat.length];
         System.arraycopy(longueurBits, 0, resultatAvecLongueur, 0, 32);
         System.arraycopy(resultat, 0, resultatAvecLongueur, 32, resultat.length);
@@ -349,13 +354,11 @@ public class DES {
     }
 
     public String decrypte(int[] messageCode) {
-        // Extraire la longueur originale des 32 premiers bits
         int longueurOriginale = 0;
         for (int i = 0; i < 32; i++) {
             longueurOriginale = (longueurOriginale << 1) | messageCode[i];
         }
 
-        // Extraire le message crypté (sans les 32 premiers bits)
         int[] messageCrypteSansLongueur = new int[messageCode.length - 32];
         System.arraycopy(messageCode, 32, messageCrypteSansLongueur, 0, messageCrypteSansLongueur.length);
 
@@ -368,7 +371,6 @@ public class DES {
             int[] G = gd[0];
             int[] D = gd[1];
 
-            // Pour le déchiffrement : même structure que chiffrement mais clés inversées
             for (int ronde = 0; ronde < NB_RONDE; ronde++) {
                 int[] G_prev = G;
                 int[] f_result = fonction_F(D, NB_RONDE - 1 - ronde);
@@ -376,17 +378,61 @@ public class DES {
                 D = xor(G_prev, f_result);
             }
 
-            // Après la dernière ronde, on inverse G et D
             int[] blocRecolle = recollage_bloc(new int[][]{D, G});
             blocsDecryptes[i] = permutation(PERM_INVERSE, blocRecolle);
         }
 
         int[] tousLesBits = recollage_bloc(blocsDecryptes);
 
-        // Ne garder que les bits correspondant à la longueur originale
         int[] bitsOriginaux = new int[longueurOriginale];
         System.arraycopy(tousLesBits, 0, bitsOriginaux, 0, longueurOriginale);
 
         return bitsToString(bitsOriginaux);
+    }
+
+    // === NOUVELLES MÉTHODES POUR TRIPLE DES ===
+
+    public int[] getMasterKey() {
+        return masterKey.clone();
+    }
+
+    public int[] crypteTripleDES1(String message_clair, int[] key1, int[] key2, int[] key3) {
+        // Premier chiffrement avec key1
+        DES des1 = new DES(key1);
+        int[] crypte1 = des1.crypte(message_clair);
+
+        // Décryptement avec key2
+        DES des2 = new DES(key2);
+        String decrypte1 = des2.decrypte(crypte1);
+
+        // Second chiffrement avec key3
+        DES des3 = new DES(key3);
+        return des3.crypte(decrypte1);
+    }
+
+    public String decrypteTripleDES1(int[] message_code, int[] key1, int[] key2, int[] key3) {
+        // Premier déchiffrement avec key3
+        DES des3 = new DES(key3);
+        String decrypte1 = des3.decrypte(message_code);
+
+        // Chiffrement avec key2
+        DES des2 = new DES(key2);
+        int[] crypte1 = des2.crypte(decrypte1);
+
+        // Second déchiffrement avec key1
+        DES des1 = new DES(key1);
+        return des1.decrypte(crypte1);
+    }
+
+
+    public int[] crypteTripleDES(String message_clair) {
+        int[] key2 = genereMasterKey();
+        int[] key3 = genereMasterKey();
+        return crypteTripleDES1(message_clair, this.masterKey, key2, key3);
+    }
+
+
+    public String decrypteTripleDES(int[] message_code, int[] key2, int[] key3) {
+        return decrypteTripleDES1(message_code, this.masterKey, key2, key3);
     }
 }
