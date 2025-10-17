@@ -402,23 +402,13 @@ public class DES {
         DES des1 = new DES(key1);
         int[] encrypted1 = des1.crypte(message_clair);
 
-        // Extraction des données chiffrées (sans l'en-tête de longueur)
-        int[] data1 = new int[encrypted1.length - 32];
-        System.arraycopy(encrypted1, 32, data1, 0, data1.length);
-
         // Deuxième étape: déchiffrement avec K2
         DES des2 = new DES(key2);
-        int[] withLength = new int[data1.length + 32];
-        // Reconstruire l'en-tête de longueur
-        for (int i = 0; i < 32; i++) {
-            withLength[i] = (data1.length >> (31 - i)) & 1;
-        }
-        System.arraycopy(data1, 0, withLength, 32, data1.length);
-        String intermediate = des2.decrypte(withLength);
+        String intermediate1 = des2.decrypte(encrypted1);
 
         // Troisième étape: chiffrement avec K3
         DES des3 = new DES(key3);
-        int[] encrypted3 = des3.crypte(intermediate);
+        int[] encrypted3 = des3.crypte(intermediate1);
 
         // Stocker les 3 clés (64 bits chacune) + le résultat final
         int[] resultat = new int[192 + encrypted3.length];
@@ -430,10 +420,7 @@ public class DES {
         return resultat;
     }
 
-    /**
-     * Déchiffrement Triple DES (3DES)
-     * Utilise la séquence inverse: Decrypt(K3) -> Encrypt(K2) -> Decrypt(K1)
-     */
+
     public String decrypte3DES(int[] messageCode) {
         // Extraction des 3 clés stockées au début
         int[] key1 = new int[64];
@@ -456,18 +443,10 @@ public class DES {
         DES des2 = new DES(key2);
         int[] encrypted2 = des2.crypte(intermediate1);
 
-        // Extraction des données (sans l'en-tête)
-        int[] data2 = new int[encrypted2.length - 32];
-        System.arraycopy(encrypted2, 32, data2, 0, data2.length);
-
         // Troisième étape: déchiffrement avec K1
         DES des1 = new DES(key1);
-        int[] withLength = new int[data2.length + 32];
-        for (int i = 0; i < 32; i++) {
-            withLength[i] = (data2.length >> (31 - i)) & 1;
-        }
-        System.arraycopy(data2, 0, withLength, 32, data2.length);
+        String messageFinal = des1.decrypte(encrypted2);
 
-        return des1.decrypte(withLength);
+        return messageFinal;
     }
 }
