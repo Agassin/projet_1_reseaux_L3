@@ -390,49 +390,84 @@ public class DES {
         return bitsToString(bitsOriginaux);
     }
 
-    // === NOUVELLES MÉTHODES POUR TRIPLE DES ===
+// === NOUVELLES MÉTHODES POUR TRIPLE DES ===
 
-    public int[] getMasterKey() {
-        return masterKey.clone();
-    }
-
-    public int[] crypteTripleDES1(String message_clair, int[] key1, int[] key2, int[] key3) {
-        // Premier chiffrement avec key1
-        DES des1 = new DES(key1);
-        int[] crypte1 = des1.crypte(message_clair);
-
-        // Décryptement avec key2
-        DES des2 = new DES(key2);
-        String decrypte1 = des2.decrypte(crypte1);
-
-        // Second chiffrement avec key3
-        DES des3 = new DES(key3);
-        return des3.crypte(decrypte1);
-    }
-
-    public String decrypteTripleDES1(int[] message_code, int[] key1, int[] key2, int[] key3) {
-        // Premier déchiffrement avec key3
-        DES des3 = new DES(key3);
-        String decrypte1 = des3.decrypte(message_code);
-
-        // Chiffrement avec key2
-        DES des2 = new DES(key2);
-        int[] crypte1 = des2.crypte(decrypte1);
-
-        // Second déchiffrement avec key1
-        DES des1 = new DES(key1);
-        return des1.decrypte(crypte1);
-    }
-
-
-    public int[] crypteTripleDES(String message_clair) {
+    public int[] crypte3DES(String message_clair) {
+        // Génération des 3 clés différentes
+        int[] key1 = this.masterKey;
         int[] key2 = genereMasterKey();
         int[] key3 = genereMasterKey();
-        return crypteTripleDES1(message_clair, this.masterKey, key2, key3);
+
+        // Première étape: chiffrement avec K1
+        DES des1 = new DES(key1);
+        int[] encrypted1 = des1.crypte(message_clair);
+
+        // Extraction des données chiffrées (sans l'en-tête de longueur)
+        int[] data1 = new int[encrypted1.length - 32];
+        System.arraycopy(encrypted1, 32, data1, 0, data1.length);
+
+        // Deuxième étape: déchiffrement avec K2
+        DES des2 = new DES(key2);
+        int[] withLength = new int[data1.length + 32];
+        // Reconstruire l'en-tête de longueur
+        for (int i = 0; i < 32; i++) {
+            withLength[i] = (data1.length >> (31 - i)) & 1;
+        }
+        System.arraycopy(data1, 0, withLength, 32, data1.length);
+        String intermediate = des2.decrypte(withLength);
+
+        // Troisième étape: chiffrement avec K3
+        DES des3 = new DES(key3);
+        int[] encrypted3 = des3.crypte(intermediate);
+
+        // Stocker les 3 clés (64 bits chacune) + le résultat final
+        int[] resultat = new int[192 + encrypted3.length];
+        System.arraycopy(key1, 0, resultat, 0, 64);
+        System.arraycopy(key2, 0, resultat, 64, 64);
+        System.arraycopy(key3, 0, resultat, 128, 64);
+        System.arraycopy(encrypted3, 0, resultat, 192, encrypted3.length);
+
+        return resultat;
     }
 
+    /**
+     * Déchiffrement Triple DES (3DES)
+     * Utilise la séquence inverse: Decrypt(K3) -> Encrypt(K2) -> Decrypt(K1)
+     */
+    public String decrypte3DES(int[] messageCode) {
+        // Extraction des 3 clés stockées au début
+        int[] key1 = new int[64];
+        int[] key2 = new int[64];
+        int[] key3 = new int[64];
 
-    public String decrypteTripleDES(int[] message_code, int[] key2, int[] key3) {
-        return decrypteTripleDES1(message_code, this.masterKey, key2, key3);
+        System.arraycopy(messageCode, 0, key1, 0, 64);
+        System.arraycopy(messageCode, 64, key2, 0, 64);
+        System.arraycopy(messageCode, 128, key3, 0, 64);
+
+        // Extraction du message chiffré
+        int[] messageCrypte = new int[messageCode.length - 192];
+        System.arraycopy(messageCode, 192, messageCrypte, 0, messageCrypte.length);
+
+        // Première étape: déchiffrement avec K3
+        DES des3 = new DES(key3);
+        String intermediate1 = des3.decrypte(messageCrypte);
+
+        // Deuxième étape: chiffrement avec K2
+        DES des2 = new DES(key2);
+        int[] encrypted2 = des2.crypte(intermediate1);
+
+        // Extraction des données (sans l'en-tête)
+        int[] data2 = new int[encrypted2.length - 32];
+        System.arraycopy(encrypted2, 32, data2, 0, data2.length);
+
+        // Troisième étape: déchiffrement avec K1
+        DES des1 = new DES(key1);
+        int[] withLength = new int[data2.length + 32];
+        for (int i = 0; i < 32; i++) {
+            withLength[i] = (data2.length >> (31 - i)) & 1;
+        }
+        System.arraycopy(data2, 0, withLength, 32, data2.length);
+
+        return des1.decrypte(withLength);
     }
 }
