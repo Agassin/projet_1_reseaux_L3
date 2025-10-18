@@ -393,60 +393,11 @@ public class DES {
 // === NOUVELLES MÉTHODES POUR TRIPLE DES ===
 
     public int[] crypte3DES(String message_clair) {
-        // Génération des 3 clés différentes
-        int[] key1 = this.masterKey;
-        int[] key2 = genereMasterKey();
-        int[] key3 = genereMasterKey();
-
-        // Première étape: chiffrement avec K1
-        DES des1 = new DES(key1);
-        int[] encrypted1 = des1.crypte(message_clair);
-
-        // Deuxième étape: déchiffrement avec K2
-        DES des2 = new DES(key2);
-        String intermediate1 = des2.decrypte(encrypted1);
-
-        // Troisième étape: chiffrement avec K3
-        DES des3 = new DES(key3);
-        int[] encrypted3 = des3.crypte(intermediate1);
-
-        // Stocker les 3 clés (64 bits chacune) + le résultat final
-        int[] resultat = new int[192 + encrypted3.length];
-        System.arraycopy(key1, 0, resultat, 0, 64);
-        System.arraycopy(key2, 0, resultat, 64, 64);
-        System.arraycopy(key3, 0, resultat, 128, 64);
-        System.arraycopy(encrypted3, 0, resultat, 192, encrypted3.length);
-
-        return resultat;
+        return crypte(decrypte(crypte(message_clair)));
     }
 
 
     public String decrypte3DES(int[] messageCode) {
-        // Extraction des 3 clés stockées au début
-        int[] key1 = new int[64];
-        int[] key2 = new int[64];
-        int[] key3 = new int[64];
-
-        System.arraycopy(messageCode, 0, key1, 0, 64);
-        System.arraycopy(messageCode, 64, key2, 0, 64);
-        System.arraycopy(messageCode, 128, key3, 0, 64);
-
-        // Extraction du message chiffré
-        int[] messageCrypte = new int[messageCode.length - 192];
-        System.arraycopy(messageCode, 192, messageCrypte, 0, messageCrypte.length);
-
-        // Première étape: déchiffrement avec K3
-        DES des3 = new DES(key3);
-        String intermediate1 = des3.decrypte(messageCrypte);
-
-        // Deuxième étape: chiffrement avec K2
-        DES des2 = new DES(key2);
-        int[] encrypted2 = des2.crypte(intermediate1);
-
-        // Troisième étape: déchiffrement avec K1
-        DES des1 = new DES(key1);
-        String messageFinal = des1.decrypte(encrypted2);
-
-        return messageFinal;
+        return decrypte(crypte(decrypte(messageCode)));
     }
 }
