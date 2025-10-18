@@ -220,12 +220,12 @@ public class DESInterface extends JFrame {
         }
 
         try {
-            if (tripleDES.isSelected()) {
-                currentEncrypted = des.crypte3DES(input);
-                showStatus("✓ Message crypté avec Triple DES", new Color(34, 197, 94));
-            } else {
+            if (normalDES.isSelected()) {
                 currentEncrypted = des.crypte(input);
                 showStatus("✓ Message crypté avec DES Standard", new Color(34, 197, 94));
+            } else if (tripleDES.isSelected()) {
+                currentEncrypted = des.crypte3DES(input);
+                showStatus("✓ Message crypté avec Triple DES", new Color(34, 197, 94));
             }
             outputArea.setText(Arrays.toString(currentEncrypted));
         } catch (Exception ex) {
@@ -254,12 +254,14 @@ public class DESInterface extends JFrame {
             }
 
             String decrypted;
-            if (tripleDES.isSelected()) {
+            if (normalDES.isSelected()) {
+                decrypted = des.decrypte(encrypted);
+                showStatus("✓ Message décrypté avec DES Standard", new Color(34, 197, 94));
+            } else if (tripleDES.isSelected()) {
                 decrypted = des.decrypte3DES(encrypted);
                 showStatus("✓ Message décrypté avec Triple DES", new Color(34, 197, 94));
             } else {
-                decrypted = des.decrypte(encrypted);
-                showStatus("✓ Message décrypté avec DES Standard", new Color(34, 197, 94));
+                decrypted = "";
             }
             outputArea.setText(decrypted);
         } catch (Exception ex) {
