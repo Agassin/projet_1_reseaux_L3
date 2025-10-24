@@ -50,7 +50,7 @@ public class DESInterface extends JFrame {
                 new EmptyBorder(20, 25, 20, 25)
         ));
 
-        JLabel titleLabel = new JLabel("🔐 Cryptage DES");
+        JLabel titleLabel = new JLabel(" Cryptage DES");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
         titleLabel.setForeground(new Color(30, 41, 59));
 
@@ -131,10 +131,10 @@ public class DESInterface extends JFrame {
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
         buttonsPanel.setBackground(bgColor);
 
-        encryptBtn = createStyledButton("🔒 Crypter", successColor);
-        decryptBtn = createStyledButton("🔓 Décrypter", primaryColor);
-        copyBtn = createStyledButton("📋 Copier", new Color(156, 163, 175));
-        clearBtn = createStyledButton("🗑️ Effacer", dangerColor);
+        encryptBtn = createStyledButton(" Crypter", successColor);
+        decryptBtn = createStyledButton(" Décrypter", primaryColor);
+        copyBtn = createStyledButton(" Copier", new Color(156, 163, 175));
+        clearBtn = createStyledButton(" Effacer", dangerColor);
 
         buttonsPanel.add(encryptBtn);
         buttonsPanel.add(decryptBtn);
